@@ -42,6 +42,7 @@ jobs:
       
       - name: Release APK
         uses: softprops/action-gh-release@v3
+        if: github.ref_type == 'tag'
         with:
           files: |
             build/app/outputs/flutter-apk/app-release.apk
