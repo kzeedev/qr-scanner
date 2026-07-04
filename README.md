@@ -1,6 +1,6 @@
-# beader
+# QR Scanner
 
-A new Flutter project.
+A Barcode Scanner app written in Flutter with history feature.
 
 ## Getting Started
 
