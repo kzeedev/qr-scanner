@@ -1,17 +1,7 @@
-buildscript {
-    repositories {
-	maven {
-	     url = uri("https://maven.myket.ir/")
-	}
-    }
-}
-
 allprojects {
     repositories {
         google()
-        maven {
-	     url = uri("https://maven.myket.ir/")
-	}
+        maven()
         mavenCentral()
     }
 }
