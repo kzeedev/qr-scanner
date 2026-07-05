@@ -7,14 +7,14 @@
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:beader/main.dart';
+import 'package:qrscanner/main.dart';
 
 void main() {
   testWidgets('Bulk Barcode Scanner smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const BarcodeScannerApp());
 
-    // Verify that our app shows the title.
-    expect(find.text('Bulk Barcode Scanner'), findsWidgets);
+    // Verify that our app shows the onboarding screen first.
+    expect(find.text('Get Started'), findsOneWidget);
   });
 }

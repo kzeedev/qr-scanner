@@ -18,25 +18,19 @@ class BarcodeScannerApp extends StatelessWidget {
     return DynamicColorBuilder(
       builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
         return MaterialApp(
-          title: 'Bulk Barcode Scanner',
-          theme: ThemeData(
-            colorScheme: lightDynamic ??
-                ColorScheme.fromSeed(
-                  seedColor: Colors.teal,
-                  brightness: Brightness.light,
-                ),
-            useMaterial3: true,
+          title: 'Barcode Scanner',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData.dark().copyWith(
+            scaffoldBackgroundColor: const Color(0xFF1E1E1E),
+            colorScheme: const ColorScheme.dark(
+              primary: Color(0xFFFFA726),
+              secondary: Color(0xFF2C2C2E),
+              surface: Color(0xFF222222),
+              onSurface: Colors.white,
+            ),
           ),
-          darkTheme: ThemeData(
-            colorScheme: darkDynamic ??
-                ColorScheme.fromSeed(
-                  seedColor: Colors.teal,
-                  brightness: Brightness.dark,
-                ),
-            useMaterial3: true,
-          ),
-          themeMode: ThemeMode.system,
-          home: const MainScreen(),
+          themeMode: ThemeMode.dark,
+          home: const OnboardingScreen(),
         );
       },
     );
@@ -409,16 +403,47 @@ class _MainScreenState extends State<MainScreen> {
   Future<void> _scanBarcode() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const ScannerScreen()),
+      MaterialPageRoute(
+        builder: (context) => ScannerScreen(
+          onBarcodeScanned: (barcode) {
+            setState(() {
+              String separator = '';
+              if (_textController.text.isNotEmpty) {
+                switch (_selectedSeparator) {
+                  case SeparatorType.newLine:
+                    separator = '\n';
+                    break;
+                  case SeparatorType.emptyLine:
+                    separator = '\n\n';
+                    break;
+                  case SeparatorType.dash:
+                    separator = ' - ';
+                    break;
+                  case SeparatorType.dot:
+                    separator = ' . ';
+                    break;
+                  case SeparatorType.custom:
+                    separator = _customSeparatorController.text;
+                    break;
+                }
+              }
+              _textController.text = _textController.text + separator + barcode;
+              _textController.selection = TextSelection.fromPosition(
+                TextPosition(offset: _textController.text.length),
+              );
+            });
+          },
+        ),
+      ),
     );
 
     if (result != null && result is String) {
-      setState(() {
-        _textController.text = _textController.text + result;
-        _textController.selection = TextSelection.fromPosition(
-          TextPosition(offset: _textController.text.length),
-        );
-      });
+      if (result == 'show_history') {
+        // Wait a frame so the scanner screen is fully popped before showing the history sheet
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _showHistoryBottomSheet();
+        });
+      }
     }
   }
 
@@ -649,7 +674,8 @@ class _MainScreenState extends State<MainScreen> {
                                                         0,
                                                         scan.content.length > 30
                                                             ? 30
-                                                            : scan.content.length) +
+                                                            : scan.content
+                                                                .length) +
                                                 (scan.content.length > 30
                                                     ? '...'
                                                     : '')),
@@ -719,189 +745,202 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+  void _showSeparatorDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF222222),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                  24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Separator Settings',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 20),
+                  DropdownButtonFormField<SeparatorType>(
+                    initialValue: _selectedSeparator,
+                    dropdownColor: const Color(0xFF222222),
+                    decoration: InputDecoration(
+                      labelText: 'Separator Type',
+                      labelStyle: const TextStyle(color: Colors.white70),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Colors.white12),
+                      ),
+                    ),
+                    items: SeparatorType.values.map((type) {
+                      return DropdownMenuItem(
+                        value: type,
+                        child: Text(type.label,
+                            style: const TextStyle(color: Colors.white)),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() {
+                          _selectedSeparator = val;
+                        });
+                        setModalState(() {});
+                      }
+                    },
+                  ),
+                  if (_selectedSeparator == SeparatorType.custom) ...[
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _customSeparatorController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Custom Separator',
+                        labelStyle: const TextStyle(color: Colors.white70),
+                        hintText: 'Enter characters (e.g. | or ,)',
+                        hintStyle: const TextStyle(color: Colors.white30),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Colors.white12),
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  FilledButton(
+                    onPressed: () {
+                      _addSeparator();
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Insert Separator'),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bulk Barcode Scanner'),
+        title: const Text('Barcode Scanner'),
         centerTitle: true,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.history),
-            tooltip: 'View History',
-            onPressed: _showHistoryBottomSheet,
-          ),
-          const SizedBox(width: 8),
-        ],
+        backgroundColor: Colors.transparent,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const SizedBox(height: 8),
             Expanded(
-              child: Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF222222),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Colors.white10),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextField(
-                    controller: _textController,
-                    maxLines: null,
-                    expands: true,
-                    textAlignVertical: TextAlignVertical.top,
-                    decoration: const InputDecoration(
-                      hintText: 'Scanned barcodes will appear here...',
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.all(12),
-                    ),
+                padding: const EdgeInsets.all(16),
+                child: TextField(
+                  controller: _textController,
+                  maxLines: null,
+                  expands: true,
+                  textAlignVertical: TextAlignVertical.top,
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                  decoration: const InputDecoration(
+                    hintText: 'Scanned barcodes will appear here...',
+                    hintStyle: TextStyle(color: Colors.white30),
+                    border: InputBorder.none,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            Card(
-              elevation: 0,
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: DropdownButtonFormField<SeparatorType>(
-                            initialValue: _selectedSeparator,
-                            decoration: InputDecoration(
-                              labelText: 'Separator Type',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              filled: true,
-                              fillColor: Theme.of(context).colorScheme.surface,
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 12),
-                            ),
-                            items: SeparatorType.values.map((type) {
-                              return DropdownMenuItem(
-                                value: type,
-                                child: Text(type.label),
-                              );
-                            }).toList(),
-                            onChanged: (val) {
-                              if (val != null) {
-                                setState(() {
-                                  _selectedSeparator = val;
-                                });
-                              }
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        FilledButton.icon(
-                          onPressed: _addSeparator,
-                          icon: const Icon(Icons.add_box),
-                          label: const Text('Add'),
-                          style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (_selectedSeparator == SeparatorType.custom) ...[
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: _customSeparatorController,
-                        decoration: InputDecoration(
-                          labelText: 'Custom Separator',
-                          hintText: 'Enter characters (e.g. | or ,)',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          filled: true,
-                          fillColor: Theme.of(context).colorScheme.surface,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: _copyToClipboard,
-                    icon: const Icon(Icons.copy),
+                    icon: const Icon(Icons.copy_rounded, size: 20),
                     label: const Text('Copy'),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
+                      side: const BorderSide(color: Colors.white12),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 12),
                 Expanded(
                   child: FilledButton.icon(
                     onPressed: _saveScan,
-                    icon: const Icon(Icons.save),
+                    icon: const Icon(Icons.save_rounded, size: 20),
                     label: const Text('Save'),
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: const Color(0xFFFFA726),
+                      foregroundColor: Colors.black,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: FilledButton.icon(
+                  child: OutlinedButton.icon(
                     onPressed: _shareList,
-                    icon: const Icon(Icons.share),
+                    icon: const Icon(Icons.share_rounded, size: 20),
                     label: const Text('Share'),
-                    style: FilledButton.styleFrom(
+                    style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
+                      side: const BorderSide(color: Colors.white12),
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      backgroundColor: Theme.of(context).colorScheme.secondary,
-                      foregroundColor: Theme.of(context).colorScheme.onSecondary,
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 80), // Space for FAB
+            const SizedBox(height: 24),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _scanBarcode,
-        icon: const Icon(Icons.document_scanner),
-        label: const Text('Scan Barcode'),
+      bottomNavigationBar: CurvedBottomNavigationBar(
+        onLeftTap: _showSeparatorDialog,
+        onCenterTap: _scanBarcode,
+        onRightTap: _showHistoryBottomSheet,
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }
 
 class ScannerScreen extends StatefulWidget {
-  const ScannerScreen({super.key});
+  final Function(String) onBarcodeScanned;
+  const ScannerScreen({super.key, required this.onBarcodeScanned});
 
   @override
   State<ScannerScreen> createState() => _ScannerScreenState();
@@ -928,156 +967,135 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AiBarcodeScanner(
-      controller: _scannerController,
-      onDetect: (capture) {
-        if (_isProcessing) return;
-        final List<Barcode> barcodes = capture.barcodes;
-        if (barcodes.isNotEmpty) {
-          final barcode = barcodes.first;
-          if (barcode.rawValue != null) {
-            setState(() {
-              _isProcessing = true;
-            });
-            _scannerController.stop();
-            _showResult(barcode.rawValue!);
-          }
-        }
-      },
-      appBarBuilder: (context, controller) => AppBar(
-        title: const Text('Scan Barcode',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
+    final double scanWindowSize = 240;
+    final Rect scanWindow = Rect.fromCenter(
+      center: Offset(
+        MediaQuery.of(context).size.width / 2,
+        MediaQuery.of(context).size.height / 2 - 60,
       ),
-      galleryButtonType: GalleryButtonType.none,
-      bottomSheetBuilder: (context, controller) {
-        return ValueListenableBuilder<MobileScannerState>(
-          valueListenable: controller,
-          builder: (context, state, child) {
-            if (!state.isInitialized) {
-              return const SizedBox.shrink();
-            }
-            final double zoom = state.zoomScale;
-            final bool isTorchOn = state.torchState == TorchState.on;
+      width: scanWindowSize,
+      height: scanWindowSize,
+    );
 
-            return Card(
-              margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-              elevation: 8,
-              color: Colors.black.withValues(alpha: 0.75),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          AiBarcodeScanner(
+            controller: _scannerController,
+            scanWindow: scanWindow,
+            fit: BoxFit.cover,
+            galleryButtonType: GalleryButtonType.none,
+            onDetect: (capture) {
+              if (_isProcessing) return;
+              final List<Barcode> barcodes = capture.barcodes;
+              if (barcodes.isNotEmpty) {
+                final barcode = barcodes.first;
+                if (barcode.rawValue != null) {
+                  setState(() {
+                    _isProcessing = true;
+                  });
+                  _scannerController.stop();
+                  _showResult(barcode.rawValue!);
+                }
+              }
+            },
+            appBarBuilder: (context, controller) => AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: ValueListenableBuilder<MobileScannerState>(
+                valueListenable: controller,
+                builder: (context, state, child) {
+                  final bool isTorchOn = state.torchState == TorchState.on;
+                  return IconButton(
+                    icon: Icon(
+                      isTorchOn ? Icons.flash_on : Icons.flash_off,
+                      color: isTorchOn ? const Color(0xFFFFA726) : Colors.white,
+                      size: 28,
+                    ),
+                    onPressed: () => controller.toggleTorch(),
+                  );
+                },
               ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.zoom_out, color: Colors.white70),
-                          onPressed: () {
-                            controller.setZoomScale((zoom - 0.1).clamp(0.0, 1.0));
-                          },
-                        ),
-                        Expanded(
-                          child: Slider(
-                            value: zoom,
-                            onChanged: (val) {
-                              controller.setZoomScale(val);
-                            },
-                            activeColor: Theme.of(context).colorScheme.primary,
-                            inactiveColor: Colors.white24,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.zoom_in, color: Colors.white70),
-                          onPressed: () {
-                            controller.setZoomScale((zoom + 0.1).clamp(0.0, 1.0));
-                          },
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${(zoom * 100).toInt()}%',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        FilledButton.icon(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: isTorchOn
-                                ? Colors.amber.withValues(alpha: 0.25)
-                                : Colors.white.withValues(alpha: 0.1),
-                            foregroundColor: isTorchOn ? Colors.amber : Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              side: BorderSide(
-                                color: isTorchOn
-                                    ? Colors.amber.withValues(alpha: 0.5)
-                                    : Colors.transparent,
-                                width: 1,
-                              ),
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                          ),
-                          onPressed: () => controller.toggleTorch(),
-                          icon: Icon(isTorchOn ? Icons.flash_on : Icons.flash_off),
-                          label: Text(
-                            isTorchOn ? 'Torch On' : 'Torch Off',
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        Row(
-                          children: [1, 2, 4].map((multiplier) {
-                            final double targetScale = multiplier == 1
-                                ? 0.0
-                                : (multiplier == 2 ? 0.33 : 1.0);
-                            final bool isSelected = (zoom - targetScale).abs() < 0.1;
-                            return Padding(
-                              padding: const EdgeInsets.only(left: 6),
-                              child: ChoiceChip(
-                                showCheckmark: false,
-                                label: Text('${multiplier}x'),
-                                selected: isSelected,
-                                onSelected: (selected) {
-                                  if (selected) {
-                                    controller.setZoomScale(targetScale);
-                                  }
-                                },
-                                labelStyle: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: isSelected ? Colors.black : Colors.white,
-                                ),
-                                selectedColor: Theme.of(context).colorScheme.primary,
-                                backgroundColor: Colors.white.withValues(alpha: 0.1),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  side: BorderSide.none,
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ],
-                    ),
-                  ],
+              centerTitle: true,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.flip_camera_android_rounded, color: Colors.white, size: 26),
+                  onPressed: () => controller.switchCamera(),
                 ),
-              ),
-            );
-          },
-        );
-      },
+                const SizedBox(width: 12),
+              ],
+            ),
+            overlayBuilder: (context, constraints, controller, isSuccess) {
+              return Stack(
+                children: [
+                  IgnorePointer(
+                    child: ScannerCustomOverlay(
+                      scanWindow: scanWindow,
+                      controller: controller,
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 12,
+                    left: 32,
+                    right: 32,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.white10),
+                      ),
+                      child: ValueListenableBuilder<MobileScannerState>(
+                        valueListenable: controller,
+                        builder: (context, state, child) {
+                          if (!state.isInitialized) {
+                            return const SizedBox.shrink();
+                          }
+                          final double currentZoom = state.zoomScale;
+                          return Row(
+                            children: [
+                              const Icon(Icons.zoom_out, color: Colors.white70, size: 18),
+                              Expanded(
+                                child: Slider(
+                                  value: currentZoom,
+                                  activeColor: const Color(0xFFFFA726),
+                                  inactiveColor: Colors.white24,
+                                  onChanged: (val) {
+                                    controller.setZoomScale(val);
+                                  },
+                                ),
+                              ),
+                              const Icon(Icons.zoom_in, color: Colors.white70, size: 18),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+            bottomNavigationBarBuilder: (context, controller) {
+              return CurvedBottomNavigationBar(
+                onLeftTap: () {
+                  Navigator.pop(context);
+                },
+                onCenterTap: () {
+                  HapticFeedback.mediumImpact();
+                  setState(() {
+                    _isProcessing = false;
+                  });
+                  _scannerController.start();
+                },
+                onRightTap: () {
+                  Navigator.pop(context, 'show_history');
+                },
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -1085,7 +1103,12 @@ class _ScannerScreenState extends State<ScannerScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ResultScreen(barcodeValue: barcodeValue),
+        builder: (context) => ResultScreen(
+          barcodeValue: barcodeValue,
+          onSave: (val) {
+            widget.onBarcodeScanned(val);
+          },
+        ),
       ),
     );
 
@@ -1097,107 +1120,320 @@ class _ScannerScreenState extends State<ScannerScreen> {
           _isProcessing = false;
         });
         _scannerController.start();
-      } else {
-        Navigator.pop(context, result);
+      } else if (result == 'show_history') {
+        Navigator.pop(context, 'show_history');
       }
     } else {
-      Navigator.pop(context);
+      setState(() {
+        _isProcessing = false;
+      });
+      _scannerController.start();
     }
   }
 }
 
+class ScannerCustomOverlay extends StatefulWidget {
+  final Rect scanWindow;
+  final MobileScannerController controller;
+
+  const ScannerCustomOverlay({
+    super.key,
+    required this.scanWindow,
+    required this.controller,
+  });
+
+  @override
+  State<ScannerCustomOverlay> createState() => _ScannerCustomOverlayState();
+}
+
+class _ScannerCustomOverlayState extends State<ScannerCustomOverlay>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animController;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _animation = Tween<double>(begin: 0, end: 1).animate(_animController);
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        CustomPaint(
+          size: Size.infinite,
+          painter: ScannerOverlayPainter(scanWindow: widget.scanWindow),
+        ),
+        AnimatedBuilder(
+          animation: _animation,
+          builder: (context, child) {
+            final double topPosition = widget.scanWindow.top +
+                (widget.scanWindow.height * _animation.value);
+            return Positioned(
+              top: topPosition,
+              left: widget.scanWindow.left + 12,
+              width: widget.scanWindow.width - 24,
+              child: Container(
+                height: 2,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFFA726),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFFFFA726),
+                      blurRadius: 4,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class ScannerOverlayPainter extends CustomPainter {
+  final Rect scanWindow;
+  final Color cornerColor;
+
+  ScannerOverlayPainter(
+      {required this.scanWindow, this.cornerColor = const Color(0xFFFFA726)});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final backgroundPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.65)
+      ..style = PaintingStyle.fill;
+
+    final backgroundPath = Path()
+      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
+      ..addRect(scanWindow)
+      ..fillType = PathFillType.evenOdd;
+
+    canvas.drawPath(backgroundPath, backgroundPaint);
+
+    final cornerPaint = Paint()
+      ..color = cornerColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4;
+
+    const double cornerLength = 24;
+
+    // Top Left Corner
+    canvas.drawPath(
+      Path()
+        ..moveTo(scanWindow.left, scanWindow.top + cornerLength)
+        ..lineTo(scanWindow.left, scanWindow.top)
+        ..lineTo(scanWindow.left + cornerLength, scanWindow.top),
+      cornerPaint,
+    );
+
+    // Top Right Corner
+    canvas.drawPath(
+      Path()
+        ..moveTo(scanWindow.right, scanWindow.top + cornerLength)
+        ..lineTo(scanWindow.right, scanWindow.top)
+        ..lineTo(scanWindow.right - cornerLength, scanWindow.top),
+      cornerPaint,
+    );
+
+    // Bottom Left Corner
+    canvas.drawPath(
+      Path()
+        ..moveTo(scanWindow.left, scanWindow.bottom - cornerLength)
+        ..lineTo(scanWindow.left, scanWindow.bottom)
+        ..lineTo(scanWindow.left + cornerLength, scanWindow.bottom),
+      cornerPaint,
+    );
+
+    // Bottom Right Corner
+    canvas.drawPath(
+      Path()
+        ..moveTo(scanWindow.right, scanWindow.bottom - cornerLength)
+        ..lineTo(scanWindow.right, scanWindow.bottom)
+        ..lineTo(scanWindow.right - cornerLength, scanWindow.bottom),
+      cornerPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 class ResultScreen extends StatelessWidget {
   final String barcodeValue;
+  final Function(String) onSave;
 
-  const ResultScreen({super.key, required this.barcodeValue});
+  const ResultScreen({
+    super.key,
+    required this.barcodeValue,
+    required this.onSave,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF1E1E1E),
       appBar: AppBar(
-        title: const Text('Scan Result'),
+        leading: IconButton(
+          icon: const Icon(Icons.chevron_left_rounded,
+              size: 32, color: Color(0xFFFFA726)),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text('QR Code'),
+        centerTitle: false,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(
-                Icons.qr_code_2,
-                size: 96,
-                color: Colors.teal,
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Scanned Value',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey,
-                ),
-                textAlign: TextAlign.center,
-              ),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  color: const Color(0xFF222222),
                   borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white10),
                 ),
-                child: SelectableText(
-                  barcodeValue,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              const SizedBox(height: 48),
-              FilledButton.icon(
-                onPressed: () {
-                  Navigator.pop(context, barcodeValue);
-                },
-                icon: const Icon(Icons.add),
-                label: const Text('Add to List'),
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.all(16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context, 'rescan');
-                },
-                icon: const Icon(Icons.refresh),
-                label: const Text('Rescan'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.all(16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Data',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    SelectableText(
+                      barcodeValue,
+                      style: const TextStyle(
+                        color: Colors.white60,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.all(16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              const Spacer(),
+              Center(
+                child: Container(
+                  width: 220,
+                  height: 220,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    border:
+                        Border.all(color: const Color(0xFFFFA726), width: 3),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.qr_code_2_rounded,
+                      size: 160,
+                      color: Colors.black,
+                    ),
                   ),
                 ),
-                child: const Text('Cancel'),
               ),
+              const Spacer(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildActionButton(
+                    icon: Icons.save_rounded,
+                    tooltip: 'Add to List',
+                    onTap: () {
+                      onSave(barcodeValue);
+                      Navigator.pop(context, 'rescan');
+                    },
+                  ),
+                  const SizedBox(width: 20),
+                  _buildActionButton(
+                    icon: Icons.copy_rounded,
+                    tooltip: 'Copy',
+                    onTap: () {
+                      Clipboard.setData(ClipboardData(text: barcodeValue));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Copied barcode to clipboard!'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 20),
+                  _buildActionButton(
+                    icon: Icons.share_rounded,
+                    tooltip: 'Share',
+                    onTap: () {
+                      SharePlus.instance.share(
+                        ShareParams(
+                          text: barcodeValue,
+                          title: 'Scanned Barcode',
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
             ],
           ),
+        ),
+      ),
+      bottomNavigationBar: CurvedBottomNavigationBar(
+        onLeftTap: () {
+          Navigator.pop(context);
+        },
+        onCenterTap: () {
+          Navigator.pop(context, 'rescan');
+        },
+        onRightTap: () {
+          Navigator.pop(context, 'show_history');
+        },
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onTap,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(30),
+        child: Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: const Color(0xFF222222),
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white12),
+          ),
+          child: Icon(icon, color: const Color(0xFFFFA726), size: 24),
         ),
       ),
     );
@@ -1230,4 +1466,356 @@ class SavedScan {
         timestamp: DateTime.parse(json['timestamp'] as String),
         name: json['name'] as String?,
       );
+}
+
+class OnboardingScreen extends StatelessWidget {
+  const OnboardingScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF1E1E1E),
+      body: Column(
+        children: [
+          Expanded(
+            flex: 6,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Positioned(
+                  top: -100,
+                  right: -100,
+                  child: Container(
+                    width: 300,
+                    height: 300,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.02),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: -50,
+                  bottom: 50,
+                  child: Container(
+                    width: 200,
+                    height: 200,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.01),
+                    ),
+                  ),
+                ),
+                const QRScannerGraphic(size: 200),
+              ],
+            ),
+          ),
+          Expanded(
+            flex: 4,
+            child: Stack(
+              alignment: Alignment.bottomCenter,
+              children: [
+                Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(40),
+                      topRight: Radius.circular(40),
+                    ),
+                  ),
+                  padding: const EdgeInsets.fromLTRB(32, 48, 32, 80),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Get Started',
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineMedium
+                            ?.copyWith(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Your all-in-one solution for scanning and generating QR codes—fast, easy, and secure.',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey[700],
+                              height: 1.5,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  bottom: 0,
+                  child: SizedBox(
+                    width: 160,
+                    height: 80,
+                    child: Stack(
+                      alignment: Alignment.topCenter,
+                      children: [
+                        Positioned(
+                          bottom: 0,
+                          child: Container(
+                            width: 140,
+                            height: 50,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF1E1E1E),
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(70),
+                                topRight: Radius.circular(70),
+                              ),
+                            ),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const MainScreen()),
+                            );
+                          },
+                          child: Container(
+                            width: 56,
+                            height: 56,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFFFA726),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black26,
+                                  blurRadius: 10,
+                                  offset: Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.arrow_forward_rounded,
+                              color: Colors.black,
+                              size: 28,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class QRScannerGraphic extends StatelessWidget {
+  final double size;
+  final Color color;
+  const QRScannerGraphic(
+      {super.key, this.size = 180, this.color = const Color(0xFFFFA726)});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Positioned(
+            top: 0,
+            left: 0,
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: color, width: 4),
+                  left: BorderSide(color: color, width: 4),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 0,
+            right: 0,
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: color, width: 4),
+                  right: BorderSide(color: color, width: 4),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: color, width: 4),
+                  left: BorderSide(color: color, width: 4),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: color, width: 4),
+                  right: BorderSide(color: color, width: 4),
+                ),
+              ),
+            ),
+          ),
+          Icon(
+            Icons.qr_code_2_rounded,
+            size: size * 0.7,
+            color: Colors.white,
+          ),
+          Container(
+            width: size * 0.8,
+            height: 2,
+            color: color,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class CurvedBottomNavigationBar extends StatelessWidget {
+  final VoidCallback onLeftTap;
+  final VoidCallback onCenterTap;
+  final VoidCallback onRightTap;
+
+  const CurvedBottomNavigationBar({
+    super.key,
+    required this.onLeftTap,
+    required this.onCenterTap,
+    required this.onRightTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 100,
+      child: Stack(
+        alignment: Alignment.bottomCenter,
+        children: [
+          CustomPaint(
+            size: Size(MediaQuery.of(context).size.width, 70),
+            painter: CurvedBottomBarPainter(),
+          ),
+          Container(
+            height: 70,
+            padding: const EdgeInsets.symmetric(horizontal: 48),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.grid_view_rounded,
+                      color: Colors.white70, size: 28),
+                  onPressed: onLeftTap,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.history_rounded,
+                      color: Colors.white70, size: 28),
+                  onPressed: onRightTap,
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            bottom: 20,
+            child: GestureDetector(
+              onTap: onCenterTap,
+              child: Container(
+                width: 64,
+                height: 64,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFFA726),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black45,
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.qr_code_scanner_rounded,
+                  color: Colors.black,
+                  size: 32,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class CurvedBottomBarPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF222222)
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    path.moveTo(0, 0);
+
+    double width = size.width;
+    double height = size.height;
+    double center = width / 2;
+    double dipWidth = 90;
+    double dipHeight = 40;
+
+    path.lineTo(center - dipWidth / 2 - 15, 0);
+    path.cubicTo(
+      center - dipWidth / 2,
+      0,
+      center - dipWidth / 2,
+      dipHeight,
+      center,
+      dipHeight,
+    );
+    path.cubicTo(
+      center + dipWidth / 2,
+      dipHeight,
+      center + dipWidth / 2,
+      0,
+      center + dipWidth / 2 + 15,
+      0,
+    );
+
+    path.lineTo(width, 0);
+    path.lineTo(width, height);
+    path.lineTo(0, height);
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
