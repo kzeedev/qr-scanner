@@ -1,4 +1,4 @@
-name: beader
+name: qrscanner
 description: "Bulk Barcode Scanner App"
 publish_to: 'none'
 version: 1.0.0+1
