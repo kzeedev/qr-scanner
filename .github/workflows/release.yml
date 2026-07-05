@@ -2,9 +2,8 @@ name: Flutter CI/CD
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    tags:
+      - '**'
 
 jobs:
   build-android:
@@ -39,18 +38,9 @@ jobs:
 
       - name: Build APK
         run: flutter build apk --release
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: android-apk
-          path: |
-            build/app/outputs/flutter-apk/app-release.apk
-            build/app/outputs/flutter-apk/app-release.apk.sha1
       
       - name: Release APK
         uses: softprops/action-gh-release@v3
-        if: github.ref_type == 'tag'
         with:
           files: |
             build/app/outputs/flutter-apk/app-release.apk
