@@ -7,7 +7,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:beader/main.dart';
+import 'package:qrscanner/main.dart';
 
 void main() {
   testWidgets('Bulk Barcode Scanner smoke test', (WidgetTester tester) async {
