@@ -1474,6 +1474,7 @@ class OnboardingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
     return Scaffold(
       backgroundColor: const Color(0xFF1E1E1E),
       body: Column(
@@ -1525,7 +1526,7 @@ class OnboardingScreen extends StatelessWidget {
                       topRight: Radius.circular(40),
                     ),
                   ),
-                  padding: const EdgeInsets.fromLTRB(32, 48, 32, 80),
+                  padding: EdgeInsets.fromLTRB(32, 48, 32, 80 + bottomInset),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -1552,7 +1553,7 @@ class OnboardingScreen extends StatelessWidget {
                   ),
                 ),
                 Positioned(
-                  bottom: 0,
+                  bottom: bottomInset,
                   child: SizedBox(
                     width: 160,
                     height: 80,
@@ -1715,18 +1716,19 @@ class CurvedBottomNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
     return SizedBox(
-      height: 100,
+      height: 100 + bottomInset,
       child: Stack(
         alignment: Alignment.bottomCenter,
         children: [
           CustomPaint(
-            size: Size(MediaQuery.of(context).size.width, 70),
+            size: Size(MediaQuery.of(context).size.width, 70 + bottomInset),
             painter: CurvedBottomBarPainter(),
           ),
           Container(
-            height: 70,
-            padding: const EdgeInsets.symmetric(horizontal: 48),
+            height: 70 + bottomInset,
+            padding: EdgeInsets.fromLTRB(48, 0, 48, bottomInset),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -1744,7 +1746,7 @@ class CurvedBottomNavigationBar extends StatelessWidget {
             ),
           ),
           Positioned(
-            bottom: 20,
+            bottom: 20 + bottomInset,
             child: GestureDetector(
               onTap: onCenterTap,
               child: Container(
