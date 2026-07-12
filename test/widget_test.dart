@@ -14,7 +14,7 @@ void main() {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const BarcodeScannerApp());
 
-    // Verify that our app shows the title.
-    expect(find.text('Bulk Barcode Scanner'), findsWidgets);
+    // Verify that our app shows the onboarding screen first.
+    expect(find.text('Get Started'), findsOneWidget);
   });
 }
