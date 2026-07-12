@@ -956,6 +956,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
     _scannerController = MobileScannerController(
       detectionSpeed: DetectionSpeed.noDuplicates,
       returnImage: false,
+      invertImage: true,
     );
   }
 
