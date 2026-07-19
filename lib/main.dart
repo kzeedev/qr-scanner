@@ -2,7 +2,8 @@ import 'dart:convert';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:ai_barcode_scanner/ai_barcode_scanner.dart';
+import 'package:flutter_zxing/flutter_zxing.dart';
+import 'package:camera/camera.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -947,24 +948,10 @@ class ScannerScreen extends StatefulWidget {
 }
 
 class _ScannerScreenState extends State<ScannerScreen> {
-  late MobileScannerController _scannerController;
+  CameraController? _cameraController;
   bool _isProcessing = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _scannerController = MobileScannerController(
-      detectionSpeed: DetectionSpeed.noDuplicates,
-      returnImage: false,
-      invertImage: true,
-    );
-  }
-
-  @override
-  void dispose() {
-    _scannerController.dispose();
-    super.dispose();
-  }
+  bool _isTorchOn = false;
+  Key? _readerKey = UniqueKey();
 
   @override
   Widget build(BuildContext context) {
@@ -982,122 +969,135 @@ class _ScannerScreenState extends State<ScannerScreen> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          AiBarcodeScanner(
-            controller: _scannerController,
-            scanWindow: scanWindow,
-            fit: BoxFit.cover,
-            galleryButtonType: GalleryButtonType.none,
-            onDetect: (capture) {
-              if (_isProcessing) return;
-              final List<Barcode> barcodes = capture.barcodes;
-              if (barcodes.isNotEmpty) {
-                final barcode = barcodes.first;
-                if (barcode.rawValue != null) {
-                  setState(() {
-                    _isProcessing = true;
-                  });
-                  _scannerController.stop();
-                  _showResult(barcode.rawValue!);
-                }
-              }
-            },
-            appBarBuilder: (context, controller) => AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: ValueListenableBuilder<MobileScannerState>(
-                valueListenable: controller,
-                builder: (context, state, child) {
-                  final bool isTorchOn = state.torchState == TorchState.on;
-                  return IconButton(
-                    icon: Icon(
-                      isTorchOn ? Icons.flash_on : Icons.flash_off,
-                      color: isTorchOn ? const Color(0xFFFFA726) : Colors.white,
-                      size: 28,
-                    ),
-                    onPressed: () => controller.toggleTorch(),
-                  );
+          if (_readerKey != null)
+            SizedBox.expand(
+              child: ReaderWidget(
+                key: _readerKey,
+                onScan: _onScanSuccess,
+                onControllerCreated: (controller, error) {
+                  if (controller != null) {
+                    _cameraController = controller;
+                  }
                 },
+                tryInverted: true,
+                tryHarder: true,
+                tryRotate: true,
+                cropPercent: 0.8,
+                scanDelay: const Duration(milliseconds: 500),
+                resolution: ResolutionPreset.max,
+                lensDirection: CameraLensDirection.back,
+                showFlashlight: false,
+                showGallery: false,
+                showToggleCamera: false,
+                showScannerOverlay: false,
               ),
-              centerTitle: true,
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.flip_camera_android_rounded, color: Colors.white, size: 26),
-                  onPressed: () => controller.switchCamera(),
-                ),
-                const SizedBox(width: 12),
-              ],
             ),
-            overlayBuilder: (context, constraints, controller, isSuccess) {
-              return Stack(
-                children: [
-                  IgnorePointer(
-                    child: ScannerCustomOverlay(
-                      scanWindow: scanWindow,
-                      controller: controller,
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 12,
-                    left: 32,
-                    right: 32,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white10),
+          // Custom overlay with scan window and animated line
+          IgnorePointer(
+            child: ScannerCustomOverlay(
+              scanWindow: scanWindow,
+            ),
+          ),
+          // Top bar with torch and camera switch
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        _isTorchOn ? Icons.flash_on : Icons.flash_off,
+                        color:
+                            _isTorchOn ? const Color(0xFFFFA726) : Colors.white,
+                        size: 28,
                       ),
-                      child: ValueListenableBuilder<MobileScannerState>(
-                        valueListenable: controller,
-                        builder: (context, state, child) {
-                          if (!state.isInitialized) {
-                            return const SizedBox.shrink();
+                      onPressed: () async {
+                        if (_cameraController != null) {
+                          try {
+                            if (_isTorchOn) {
+                              await _cameraController!
+                                  .setFlashMode(FlashMode.off);
+                            } else {
+                              await _cameraController!
+                                  .setFlashMode(FlashMode.torch);
+                            }
+                            setState(() {
+                              _isTorchOn = !_isTorchOn;
+                            });
+                          } catch (e) {
+                            debugPrint('Error toggling torch: $e');
                           }
-                          final double currentZoom = state.zoomScale;
-                          return Row(
-                            children: [
-                              const Icon(Icons.zoom_out, color: Colors.white70, size: 18),
-                              Expanded(
-                                child: Slider(
-                                  value: currentZoom,
-                                  activeColor: const Color(0xFFFFA726),
-                                  inactiveColor: Colors.white24,
-                                  onChanged: (val) {
-                                    controller.setZoomScale(val);
-                                  },
-                                ),
-                              ),
-                              const Icon(Icons.zoom_in, color: Colors.white70, size: 18),
-                            ],
-                          );
-                        },
-                      ),
+                        }
+                      },
                     ),
-                  ),
-                ],
-              );
-            },
-            bottomNavigationBarBuilder: (context, controller) {
-              return CurvedBottomNavigationBar(
-                onLeftTap: () {
-                  Navigator.pop(context);
-                },
-                onCenterTap: () {
-                  HapticFeedback.mediumImpact();
-                  setState(() {
-                    _isProcessing = false;
-                  });
-                  _scannerController.start();
-                },
-                onRightTap: () {
-                  Navigator.pop(context, 'show_history');
-                },
-              );
-            },
+                    IconButton(
+                      icon: const Icon(Icons.flip_camera_android_rounded,
+                          color: Colors.white, size: 26),
+                      onPressed: () {
+                        // Rebuild ReaderWidget with a new key to trigger camera re-init
+                        _restartScanner();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Bottom navigation bar
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: CurvedBottomNavigationBar(
+              onLeftTap: () {
+                Navigator.pop(context);
+              },
+              onCenterTap: () {
+                HapticFeedback.mediumImpact();
+                _restartScanner();
+              },
+              onRightTap: () {
+                Navigator.pop(context, 'show_history');
+              },
+            ),
           ),
         ],
       ),
     );
+  }
+
+  void _onScanSuccess(Code? code) async {
+    if (_isProcessing) return;
+    if (code != null && code.isValid && code.text != null) {
+      setState(() {
+        _isProcessing = true;
+      });
+      _showResult(code.text!);
+    }
+  }
+
+  void _restartScanner() {
+    // Remove the ReaderWidget from the tree first
+    setState(() {
+      _isProcessing = false;
+      _isTorchOn = false;
+      _cameraController = null;
+      _readerKey = null;
+    });
+    // Re-add it next frame so the old camera is fully released
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          _readerKey = UniqueKey();
+        });
+      }
+    });
   }
 
   void _showResult(String barcodeValue) async {
@@ -1117,30 +1117,22 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
     if (result != null) {
       if (result == 'rescan') {
-        setState(() {
-          _isProcessing = false;
-        });
-        _scannerController.start();
+        _restartScanner();
       } else if (result == 'show_history') {
         Navigator.pop(context, 'show_history');
       }
     } else {
-      setState(() {
-        _isProcessing = false;
-      });
-      _scannerController.start();
+      _restartScanner();
     }
   }
 }
 
 class ScannerCustomOverlay extends StatefulWidget {
   final Rect scanWindow;
-  final MobileScannerController controller;
 
   const ScannerCustomOverlay({
     super.key,
     required this.scanWindow,
-    required this.controller,
   });
 
   @override
