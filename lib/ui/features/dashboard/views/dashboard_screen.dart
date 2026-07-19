@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../core/di.dart';
 import '../../../../domain/repositories/scan_history_repository.dart';
 import '../../../core/widgets/curved_bottom_navigation_bar.dart';
+import '../../about/views/about_screen.dart';
 import '../../scan/views/scanner_screen.dart';
 import '../view_models/dashboard_view_model.dart';
 import 'history_bottom_sheet.dart';
@@ -194,6 +195,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
             centerTitle: true,
             elevation: 0,
             backgroundColor: Colors.transparent,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.info_outline_rounded, color: Colors.white70),
+                tooltip: 'About',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AboutScreen(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(width: 8),
+            ],
           ),
           body: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),

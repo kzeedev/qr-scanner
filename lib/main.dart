@@ -8,6 +8,10 @@ import 'domain/repositories/scan_history_repository.dart';
 import 'ui/core/theme.dart';
 import 'ui/features/onboarding/views/onboarding_screen.dart';
 
+import 'data/repositories/update_repository_impl.dart';
+import 'data/services/github_update_service.dart';
+import 'domain/repositories/update_repository.dart';
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   _setupDependencies();
@@ -18,8 +22,13 @@ void _setupDependencies() {
   final storageService = LocalStorageService();
   final historyRepository = ScanHistoryRepositoryImpl(storageService: storageService);
 
+  final updateService = GitHubUpdateService();
+  final updateRepository = UpdateRepositoryImpl(service: updateService);
+
   di().register<LocalStorageService>(storageService);
   di().register<ScanHistoryRepository>(historyRepository);
+  di().register<GitHubUpdateService>(updateService);
+  di().register<UpdateRepository>(updateRepository);
 }
 
 class BarcodeScannerApp extends StatelessWidget {

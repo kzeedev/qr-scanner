@@ -1,7 +1,7 @@
-class di {
-  di._();
-  static final di _instance = di._();
-  factory di() => _instance;
+class DI {
+  DI._();
+  static final DI _instance = DI._();
+  factory DI() => _instance;
 
   final Map<Type, Object> _registry = {};
 
@@ -17,3 +17,6 @@ class di {
     return instance as T;
   }
 }
+
+DI di() => DI();
+
