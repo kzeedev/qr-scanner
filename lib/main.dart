@@ -9,6 +9,7 @@ import 'ui/core/theme.dart';
 import 'ui/features/onboarding/views/onboarding_screen.dart';
 
 import 'data/repositories/update_repository_impl.dart';
+import 'data/services/app_info_service.dart';
 import 'data/services/github_update_service.dart';
 import 'domain/repositories/update_repository.dart';
 
@@ -24,11 +25,13 @@ void _setupDependencies() {
 
   final updateService = GitHubUpdateService();
   final updateRepository = UpdateRepositoryImpl(service: updateService);
+  final appInfoService = AppInfoService();
 
   di().register<LocalStorageService>(storageService);
   di().register<ScanHistoryRepository>(historyRepository);
   di().register<GitHubUpdateService>(updateService);
   di().register<UpdateRepository>(updateRepository);
+  di().register<AppInfoService>(appInfoService);
 }
 
 class BarcodeScannerApp extends StatelessWidget {

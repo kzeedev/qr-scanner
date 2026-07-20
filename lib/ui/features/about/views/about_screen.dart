@@ -90,9 +90,9 @@ class _AboutScreenState extends State<AboutScreen> {
                         color: const Color(0xFFFFA726).withValues(alpha: 0.4),
                       ),
                     ),
-                    child: const Text(
-                      'Version ${AboutViewModel.appVersion}',
-                      style: TextStyle(
+                    child: Text(
+                      'Version ${_viewModel.appVersion}',
+                      style: const TextStyle(
                         color: Color(0xFFFFA726),
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -168,7 +168,7 @@ class _AboutScreenState extends State<AboutScreen> {
 
                 const SizedBox(height: 16),
 
-                // Check for Updates Tile
+                // Check for Updates / Download Tile
                 Card(
                   elevation: 0,
                   color: const Color(0xFF222222),
@@ -240,55 +240,28 @@ class _AboutScreenState extends State<AboutScreen> {
                               ),
                             ),
                           ),
+                        ] else if (updateInfo?.hasUpdate == true) ...[
+                          const SizedBox(height: 16),
+                          _buildDownloadSection(updateInfo!),
                         ] else ...[
                           const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: _viewModel.checkForUpdates,
-                                  icon: const Icon(Icons.refresh_rounded, size: 18),
-                                  label: Text(
-                                    updateInfo == null
-                                        ? 'Check Now'
-                                        : 'Check Again',
-                                  ),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: Colors.white,
-                                    side: const BorderSide(color: Colors.white24),
-                                    padding:
-                                        const EdgeInsets.symmetric(vertical: 12),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: _viewModel.checkForUpdates,
+                              icon: const Icon(Icons.refresh_rounded, size: 18),
+                              label: Text(
+                                updateInfo == null ? 'Check Now' : 'Check Again',
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                side: const BorderSide(color: Colors.white24),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              if (updateInfo?.hasUpdate == true &&
-                                  updateInfo?.releaseUrl != null) ...[
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: FilledButton.icon(
-                                    onPressed: () {
-                                      _viewModel.launchUrlString(
-                                          updateInfo!.releaseUrl!);
-                                    },
-                                    icon: const Icon(Icons.download_rounded,
-                                        size: 18),
-                                    label: const Text('Download'),
-                                    style: FilledButton.styleFrom(
-                                      backgroundColor: const Color(0xFFFFA726),
-                                      foregroundColor: Colors.black,
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 12),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ],
+                            ),
                           ),
                         ],
                       ],
@@ -315,6 +288,235 @@ class _AboutScreenState extends State<AboutScreen> {
     );
   }
 
+  Widget _buildDownloadSection(dynamic updateInfo) {
+    final state = _viewModel.downloadState;
+
+    switch (state) {
+      case DownloadState.idle:
+        return Column(
+          children: [
+            if (updateInfo.apkUrl != null)
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () {
+                    _viewModel.startInAppUpdate(
+                      updateInfo.apkUrl!,
+                      updateInfo.sha1Url,
+                    );
+                  },
+                  icon: const Icon(Icons.download_rounded, size: 20),
+                  label: const Text('Download & Install Update'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFFFA726),
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            if (updateInfo.releaseUrl != null) ...[
+              if (updateInfo.apkUrl != null) const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    _viewModel.launchUrlString(updateInfo.releaseUrl!);
+                  },
+                  icon: const Icon(Icons.open_in_browser_rounded, size: 18),
+                  label: const Text('Open Release Page'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white70,
+                    side: const BorderSide(color: Colors.white12),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        );
+
+      case DownloadState.downloading:
+        final percentage = (_viewModel.downloadProgress * 100).toInt();
+        final receivedMb = (_viewModel.receivedBytes / (1024 * 1024)).toStringAsFixed(1);
+        final totalMb = (_viewModel.totalBytes / (1024 * 1024)).toStringAsFixed(1);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Downloading APK...',
+                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+                Text(
+                  _viewModel.totalBytes > 0
+                      ? '$percentage% ($receivedMb MB / $totalMb MB)'
+                      : '$receivedMb MB',
+                  style: const TextStyle(
+                    color: Color(0xFFFFA726),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: _viewModel.downloadProgress > 0 ? _viewModel.downloadProgress : null,
+                minHeight: 8,
+                backgroundColor: Colors.white12,
+                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFFA726)),
+              ),
+            ),
+          ],
+        );
+
+      case DownloadState.verifyingChecksum:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFFA726)),
+                  ),
+                ),
+                SizedBox(width: 12),
+                Text(
+                  'Verifying SHA-1 Checksum...',
+                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: const LinearProgressIndicator(
+                minHeight: 8,
+                backgroundColor: Colors.white12,
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFFA726)),
+              ),
+            ),
+          ],
+        );
+
+      case DownloadState.checksumVerified:
+        return Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.green.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.green.withValues(alpha: 0.4)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.verified_rounded, color: Colors.greenAccent, size: 20),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'SHA-1 Checksum verified successfully!',
+                      style: TextStyle(
+                        color: Colors.greenAccent,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _viewModel.installDownloadedApk,
+                icon: const Icon(Icons.install_mobile_rounded, size: 20),
+                label: const Text('Install Update Now'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFA726),
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+
+      case DownloadState.checksumFailed:
+      case DownloadState.downloadFailed:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.red.withValues(alpha: 0.4)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _viewModel.downloadErrorMessage ?? 'Download failed.',
+                      style: const TextStyle(
+                        color: Colors.redAccent,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  _viewModel.startInAppUpdate(
+                    updateInfo.apkUrl!,
+                    updateInfo.sha1Url,
+                  );
+                },
+                icon: const Icon(Icons.refresh_rounded, size: 18),
+                label: const Text('Retry Download'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Colors.white24),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+    }
+  }
+
   String _getStatusSubtitle(dynamic updateInfo) {
     if (_viewModel.isChecking) {
       return 'Checking GitHub releases...';
@@ -328,6 +530,6 @@ class _AboutScreenState extends State<AboutScreen> {
     if (updateInfo.hasUpdate) {
       return 'New version available: v${updateInfo.latestVersion}';
     }
-    return 'You are using the latest version (${AboutViewModel.appVersion}).';
+    return 'You are using the latest version (${_viewModel.appVersion}).';
   }
 }

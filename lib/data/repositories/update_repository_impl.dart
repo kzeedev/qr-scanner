@@ -30,6 +30,9 @@ class UpdateRepositoryImpl implements UpdateRepository {
         hasUpdate: hasUpdate,
         releaseUrl: release.htmlUrl,
         releaseNotes: release.body,
+        apkUrl: release.apkUrl,
+        apkSize: release.apkSize,
+        sha1Url: release.sha1Url,
       );
     } catch (e) {
       return AppVersionInfo(
@@ -44,7 +47,6 @@ class UpdateRepositoryImpl implements UpdateRepository {
     final cleanCurrent = current.startsWith('v') ? current.substring(1) : current;
     final cleanLatest = latest.startsWith('v') ? latest.substring(1) : latest;
 
-    // Extract version part before any build number like +1 or dash -beta
     final curBase = cleanCurrent.split('+').first.split('-').first;
     final latBase = cleanLatest.split('+').first.split('-').first;
 
