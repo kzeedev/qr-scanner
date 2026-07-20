@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/constants/app_constants.dart';
+import '../../../../core/constants/app_strings.dart';
 import '../../../../data/services/apk_download_service.dart';
 import '../../../../data/services/app_info_service.dart';
 import '../../../../domain/models/app_version_info.dart';
@@ -21,9 +23,8 @@ class AboutViewModel extends ChangeNotifier {
   final ApkDownloadService _downloadService;
   final AppInfoService _appInfoService;
 
-  static const String githubUrl = 'https://github.com/KZeeDev/qr-scanner';
-  static const String appDescription =
-      'Bulk Barcode Scanner is a fast, versatile barcode and QR code scanner tool built with Flutter & ZXing. Easily scan multiple codes continuously, customize item separators, save scan history, and export or share data seamlessly.';
+  static const String githubUrl = AppConstants.githubRepoUrl;
+  static const String appDescription = AppStrings.appDescription;
 
   String _appVersion = 'Loading...';
   String get appVersion => _appVersion;

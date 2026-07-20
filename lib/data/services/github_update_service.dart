@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../../core/constants/app_constants.dart';
 
 class GitHubReleaseAsset {
   final String name;
@@ -61,7 +62,7 @@ class GitHubReleaseData {
 
     return GitHubReleaseData(
       tagName: json['tag_name'] as String? ?? '',
-      htmlUrl: json['html_url'] as String? ?? 'https://github.com/KZeeDev/qr-scanner',
+      htmlUrl: json['html_url'] as String? ?? AppConstants.githubRepoUrl,
       body: json['body'] as String?,
       apkUrl: apkUrl,
       apkSize: apkSize,
@@ -71,16 +72,13 @@ class GitHubReleaseData {
 }
 
 class GitHubUpdateService {
-  static const String _latestReleaseUrl =
-      'https://api.github.com/repos/KZeeDev/qr-scanner/releases/latest';
-
   Future<GitHubReleaseData?> fetchLatestRelease() async {
     try {
       final response = await http.get(
-        Uri.parse(_latestReleaseUrl),
+        Uri.parse(AppConstants.githubLatestReleaseApiUrl),
         headers: {
           'Accept': 'application/vnd.github.v3+json',
-          'User-Agent': 'BulkBarcodeScannerApp',
+          'User-Agent': AppConstants.httpUserAgent,
         },
       ).timeout(const Duration(seconds: 10));
 

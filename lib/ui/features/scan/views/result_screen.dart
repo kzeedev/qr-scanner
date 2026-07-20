@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../../../core/widgets/curved_bottom_navigation_bar.dart';
 
 class ResultScreen extends StatelessWidget {
@@ -16,11 +17,11 @@ class ResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E1E),
+      backgroundColor: AppColors.scaffoldBackground,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.chevron_left_rounded,
-              size: 32, color: Color(0xFFFFA726)),
+              size: 32, color: AppColors.primary),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text('QR Code'),
@@ -38,9 +39,9 @@ class ResultScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF222222),
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white10),
+                  border: Border.all(color: AppColors.cardBorder),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,8 +73,7 @@ class ResultScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(24),
-                    border:
-                        Border.all(color: const Color(0xFFFFA726), width: 3),
+                    border: Border.all(color: AppColors.primary, width: 3),
                   ),
                   child: const Center(
                     child: Icon(
@@ -158,11 +158,11 @@ class ResultScreen extends StatelessWidget {
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: const Color(0xFF222222),
+            color: AppColors.surface,
             shape: BoxShape.circle,
             border: Border.all(color: Colors.white12),
           ),
-          child: Icon(icon, color: const Color(0xFFFFA726), size: 24),
+          child: Icon(icon, color: AppColors.primary, size: 24),
         ),
       ),
     );

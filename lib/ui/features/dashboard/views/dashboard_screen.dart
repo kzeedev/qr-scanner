@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_strings.dart';
 import '../../../../core/di.dart';
 import '../../../../domain/repositories/scan_history_repository.dart';
 import '../../../core/widgets/curved_bottom_navigation_bar.dart';
@@ -52,7 +54,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final saveName = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Save Scan List'),
+        title: const Text(AppStrings.saveScanList),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -191,7 +193,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       builder: (context, _) {
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Barcode Scanner'),
+            title: const Text(AppStrings.appTitle),
             centerTitle: true,
             elevation: 0,
             backgroundColor: Colors.transparent,
@@ -220,9 +222,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFF222222),
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: Colors.white10),
+                      border: Border.all(color: AppColors.cardBorder),
                     ),
                     padding: const EdgeInsets.all(16),
                     child: TextField(
@@ -264,7 +266,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         label: const Text('Save'),
                         style: FilledButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          backgroundColor: const Color(0xFFFFA726),
+                          backgroundColor: AppColors.primary,
                           foregroundColor: Colors.black,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),

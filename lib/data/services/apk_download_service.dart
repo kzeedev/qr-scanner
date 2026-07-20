@@ -2,8 +2,9 @@ import 'dart:async';
 import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
-import 'package:open_file_plus/open_file_plus.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
+import '../../core/constants/app_constants.dart';
 
 class ApkDownloadResult {
   final bool success;
@@ -31,7 +32,7 @@ class ApkDownloadService {
     required void Function(int receivedBytes, int totalBytes) onProgress,
   }) async {
     final request = http.Request('GET', Uri.parse(apkUrl));
-    request.headers['User-Agent'] = 'BulkBarcodeScannerApp';
+    request.headers['User-Agent'] = AppConstants.httpUserAgent;
 
     final response = await _client.send(request);
 
@@ -75,7 +76,7 @@ class ApkDownloadService {
     try {
       final response = await _client.get(
         Uri.parse(sha1Url),
-        headers: {'User-Agent': 'BulkBarcodeScannerApp'},
+        headers: {'User-Agent': AppConstants.httpUserAgent},
       ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
@@ -99,6 +100,6 @@ class ApkDownloadService {
   }
 
   Future<OpenResult> installApk(File apkFile) async {
-    return await OpenFile.open(apkFile.path);
+    return await OpenFilex.open(apkFile.path);
   }
 }

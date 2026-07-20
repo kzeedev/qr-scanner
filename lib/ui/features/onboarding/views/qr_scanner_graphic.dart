@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_colors.dart';
 
 class QRScannerGraphic extends StatelessWidget {
   final double size;
@@ -7,7 +8,7 @@ class QRScannerGraphic extends StatelessWidget {
   const QRScannerGraphic({
     super.key,
     this.size = 180,
-    this.color = const Color(0xFFFFA726),
+    this.color = AppColors.primary,
   });
 
   @override

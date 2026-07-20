@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_constants.dart';
+import '../../../../core/constants/app_strings.dart';
 import '../../../../core/di.dart';
 import '../../../../domain/repositories/update_repository.dart';
 import '../../onboarding/views/qr_scanner_graphic.dart';
@@ -31,11 +34,11 @@ class _AboutScreenState extends State<AboutScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E1E),
+      backgroundColor: AppColors.scaffoldBackground,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.chevron_left_rounded,
-              size: 32, color: Color(0xFFFFA726)),
+              size: 32, color: AppColors.primary),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text('About App'),
@@ -58,10 +61,10 @@ class _AboutScreenState extends State<AboutScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF222222),
+                      color: AppColors.surface,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: const Color(0xFFFFA726).withValues(alpha: 0.3),
+                        color: AppColors.primary.withValues(alpha: 0.3),
                         width: 2,
                       ),
                     ),
@@ -70,7 +73,7 @@ class _AboutScreenState extends State<AboutScreen> {
                 ),
                 const SizedBox(height: 20),
                 const Text(
-                  'Bulk Barcode Scanner',
+                  AppStrings.appTitle,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white,
@@ -84,16 +87,16 @@ class _AboutScreenState extends State<AboutScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFA726).withValues(alpha: 0.15),
+                      color: AppColors.primary.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: const Color(0xFFFFA726).withValues(alpha: 0.4),
+                        color: AppColors.primary.withValues(alpha: 0.4),
                       ),
                     ),
                     child: Text(
                       'Version ${_viewModel.appVersion}',
                       style: const TextStyle(
-                        color: Color(0xFFFFA726),
+                        color: AppColors.primary,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                       ),
@@ -104,12 +107,12 @@ class _AboutScreenState extends State<AboutScreen> {
                 Container(
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF222222),
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.white10),
+                    border: Border.all(color: AppColors.cardBorder),
                   ),
                   child: const Text(
-                    AboutViewModel.appDescription,
+                    AppStrings.appDescription,
                     style: TextStyle(
                       color: Colors.white70,
                       fontSize: 14,
@@ -123,10 +126,10 @@ class _AboutScreenState extends State<AboutScreen> {
                 // GitHub Page Tile
                 Card(
                   elevation: 0,
-                  color: const Color(0xFF222222),
+                  color: AppColors.surface,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
-                    side: const BorderSide(color: Colors.white10),
+                    side: const BorderSide(color: AppColors.cardBorder),
                   ),
                   child: ListTile(
                     contentPadding:
@@ -139,7 +142,7 @@ class _AboutScreenState extends State<AboutScreen> {
                       ),
                       child: const Icon(
                         Icons.code_rounded,
-                        color: Color(0xFFFFA726),
+                        color: AppColors.primary,
                         size: 24,
                       ),
                     ),
@@ -152,7 +155,7 @@ class _AboutScreenState extends State<AboutScreen> {
                       ),
                     ),
                     subtitle: const Text(
-                      'github.com/KZeeDev/qr-scanner',
+                      AppConstants.githubRepoDisplayUrl,
                       style: TextStyle(color: Colors.white54, fontSize: 13),
                     ),
                     trailing: const Icon(

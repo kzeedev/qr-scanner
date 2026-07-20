@@ -1,20 +1,19 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/constants/app_constants.dart';
 
 class LocalStorageService {
-  static const String _historyKey = 'scan_history';
-
   Future<List<String>?> getStringList() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getStringList(_historyKey);
+    return prefs.getStringList(AppConstants.historyStorageKey);
   }
 
   Future<bool> setStringList(List<String> list) async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.setStringList(_historyKey, list);
+    return prefs.setStringList(AppConstants.historyStorageKey, list);
   }
 
   Future<bool> removeKey() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.remove(_historyKey);
+    return prefs.remove(AppConstants.historyStorageKey);
   }
 }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_strings.dart';
 import '../../../../domain/models/separator_type.dart';
 import '../view_models/dashboard_view_model.dart';
 
@@ -10,7 +12,7 @@ class SeparatorSettingsDialog extends StatelessWidget {
   static void show(BuildContext context, DashboardViewModel viewModel) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF222222),
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -33,7 +35,7 @@ class SeparatorSettingsDialog extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Separator Settings',
+                AppStrings.separatorSettingsTitle,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -42,7 +44,7 @@ class SeparatorSettingsDialog extends StatelessWidget {
               const SizedBox(height: 20),
               DropdownButtonFormField<SeparatorType>(
                 initialValue: viewModel.selectedSeparator,
-                dropdownColor: const Color(0xFF222222),
+                dropdownColor: AppColors.surface,
                 decoration: InputDecoration(
                   labelText: 'Separator Type',
                   labelStyle: const TextStyle(color: Colors.white70),
@@ -93,7 +95,7 @@ class SeparatorSettingsDialog extends StatelessWidget {
                   viewModel.addSeparator();
                   Navigator.pop(context);
                 },
-                child: const Text('Insert Separator'),
+                child: const Text(AppStrings.insertSeparator),
               ),
             ],
           ),

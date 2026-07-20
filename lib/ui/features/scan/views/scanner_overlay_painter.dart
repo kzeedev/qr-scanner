@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_colors.dart';
 
 class ScannerOverlayPainter extends CustomPainter {
   final Rect scanWindow;
@@ -6,7 +7,7 @@ class ScannerOverlayPainter extends CustomPainter {
 
   ScannerOverlayPainter({
     required this.scanWindow,
-    this.cornerColor = const Color(0xFFFFA726),
+    this.cornerColor = AppColors.primary,
   });
 
   @override

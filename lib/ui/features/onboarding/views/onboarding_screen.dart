@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_strings.dart';
 import '../../dashboard/views/dashboard_screen.dart';
 import 'qr_scanner_graphic.dart';
 
@@ -9,7 +11,7 @@ class OnboardingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E1E),
+      backgroundColor: AppColors.scaffoldBackground,
       body: Column(
         children: [
           Expanded(
@@ -64,7 +66,7 @@ class OnboardingScreen extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Get Started',
+                        AppStrings.onboardingTitle,
                         style: Theme.of(context)
                           .textTheme
                           .headlineMedium
@@ -75,7 +77,7 @@ class OnboardingScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Your all-in-one solution for scanning and generating QR codes—fast, easy, and secure.',
+                        AppStrings.onboardingDescription,
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: Colors.grey[700],
@@ -99,7 +101,7 @@ class OnboardingScreen extends StatelessWidget {
                             width: 140,
                             height: 50,
                             decoration: const BoxDecoration(
-                              color: Color(0xFF1E1E1E),
+                              color: AppColors.scaffoldBackground,
                               borderRadius: BorderRadius.only(
                                 topLeft: Radius.circular(70),
                                 topRight: Radius.circular(70),
@@ -119,7 +121,7 @@ class OnboardingScreen extends StatelessWidget {
                             width: 56,
                             height: 56,
                             decoration: const BoxDecoration(
-                              color: Color(0xFFFFA726),
+                              color: AppColors.primary,
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(

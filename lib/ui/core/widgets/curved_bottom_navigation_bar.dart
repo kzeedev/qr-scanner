@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/app_colors.dart';
 
 class CurvedBottomNavigationBar extends StatelessWidget {
   final VoidCallback onLeftTap;
@@ -50,10 +51,10 @@ class CurvedBottomNavigationBar extends StatelessWidget {
               child: Container(
                 width: 64,
                 height: 64,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFFFA726),
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
                   shape: BoxShape.circle,
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(
                       color: Colors.black45,
                       blurRadius: 8,
@@ -79,7 +80,7 @@ class CurvedBottomBarPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFF222222)
+      ..color = AppColors.surface
       ..style = PaintingStyle.fill;
 
     final path = Path();

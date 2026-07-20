@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../../core/constants/app_strings.dart';
 import '../../../../domain/models/saved_scan.dart';
 import '../view_models/dashboard_view_model.dart';
 
@@ -53,7 +54,7 @@ class HistoryBottomSheet extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Scan History',
+                      AppStrings.scanHistoryTitle,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: Theme.of(context).colorScheme.onSurface,
@@ -63,7 +64,7 @@ class HistoryBottomSheet extends StatelessWidget {
                       TextButton.icon(
                         onPressed: () => _confirmClearAll(context),
                         icon: const Icon(Icons.delete_sweep),
-                        label: const Text('Clear All'),
+                        label: const Text(AppStrings.clearAllHistory),
                         style: TextButton.styleFrom(
                           foregroundColor: Theme.of(context).colorScheme.error,
                         ),
@@ -100,7 +101,7 @@ class HistoryBottomSheet extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No saved scans yet',
+            AppStrings.noSavedScansYet,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),

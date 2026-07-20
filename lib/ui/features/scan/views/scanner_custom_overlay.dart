@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_colors.dart';
 import 'scanner_overlay_painter.dart';
 
 class ScannerCustomOverlay extends StatefulWidget {
@@ -55,10 +56,10 @@ class _ScannerCustomOverlayState extends State<ScannerCustomOverlay>
               child: Container(
                 height: 2,
                 decoration: const BoxDecoration(
-                  color: Color(0xFFFFA726),
+                  color: AppColors.primary,
                   boxShadow: [
                     BoxShadow(
-                      color: Color(0xFFFFA726),
+                      color: AppColors.primary,
                       blurRadius: 4,
                       spreadRadius: 1,
                     ),

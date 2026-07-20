@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_zxing/flutter_zxing.dart';
 
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../core/widgets/curved_bottom_navigation_bar.dart';
 import 'result_screen.dart';
 import 'scanner_custom_overlay.dart';
@@ -23,7 +25,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final double scanWindowSize = 240;
+    final double scanWindowSize = AppConstants.defaultScanWindowSize;
     final Rect scanWindow = Rect.fromCenter(
       center: Offset(
         MediaQuery.of(context).size.width / 2,
@@ -81,8 +83,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                     IconButton(
                       icon: Icon(
                         _isTorchOn ? Icons.flash_on : Icons.flash_off,
-                        color:
-                            _isTorchOn ? const Color(0xFFFFA726) : Colors.white,
+                        color: _isTorchOn ? AppColors.primary : Colors.white,
                         size: 28,
                       ),
                       onPressed: () async {
