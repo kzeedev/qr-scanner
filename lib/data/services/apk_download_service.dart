@@ -100,6 +100,9 @@ class ApkDownloadService {
   }
 
   Future<OpenResult> installApk(File apkFile) async {
-    return await OpenFilex.open(apkFile.path);
+    return await OpenFilex.open(
+      apkFile.path,
+      type: 'application/vnd.android.package-archive',
+    );
   }
 }
