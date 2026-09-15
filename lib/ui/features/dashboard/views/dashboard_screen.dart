@@ -162,8 +162,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => ScannerScreen(
-          onBarcodeScanned: (barcode) {
-            _viewModel.appendBarcode(barcode);
+          currentScannedValues: _viewModel.textController.text,
+          getScannedValues: () => _viewModel.textController.text,
+          onContentChanged: (newContent) {
+            _viewModel.updateContent(newContent);
+          },
+          onBarcodeScanned: (barcode, {bool withSeparator = false}) {
+            _viewModel.appendBarcode(barcode, withSeparator: withSeparator);
           },
         ),
       ),

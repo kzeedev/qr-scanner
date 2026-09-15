@@ -14,4 +14,9 @@ class AppStrings {
   static const String insertSeparator = 'Insert Separator';
   static const String saveScanList = 'Save Scan List';
   static const String renameList = 'Rename List';
+  static const String save = 'Save';
+  static const String saveWithSeparator = 'Save with Separator';
+  static const String dashboardPreview = 'Dashboard Preview';
+  static const String noScannedValuesInDashboard =
+      'No scanned values in dashboard yet.\nSave this barcode to add it to your list.';
 }

@@ -115,12 +115,15 @@ class DashboardViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addSeparator() {
-    String separator = _selectedSeparator.value;
+  String _getSeparatorString() {
     if (_selectedSeparator == SeparatorType.custom) {
-      separator = customSeparatorController.text;
+      return customSeparatorController.text;
     }
+    return _selectedSeparator.value;
+  }
 
+  void addSeparator() {
+    final separator = _getSeparatorString();
     final currentText = textController.text;
     textController.text = currentText + separator;
     textController.selection = TextSelection.fromPosition(
@@ -129,17 +132,19 @@ class DashboardViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void appendBarcode(String barcode) {
-    String separator = '';
-    if (textController.text.isNotEmpty) {
-      if (_selectedSeparator == SeparatorType.custom) {
-        separator = customSeparatorController.text;
-      } else {
-        separator = _selectedSeparator.value;
-      }
+  void appendBarcode(String barcode, {bool withSeparator = false}) {
+    final sep = _getSeparatorString();
+
+    String prefix = '';
+    if (textController.text.isNotEmpty &&
+        sep.isNotEmpty &&
+        !textController.text.endsWith(sep)) {
+      prefix = sep;
     }
 
-    textController.text = textController.text + separator + barcode;
+    final suffix = withSeparator ? (sep + sep) : sep;
+    textController.text = textController.text + prefix + barcode + suffix;
+
     textController.selection = TextSelection.fromPosition(
       TextPosition(offset: textController.text.length),
     );
@@ -148,6 +153,14 @@ class DashboardViewModel extends ChangeNotifier {
 
   void applyRestore(String content) {
     textController.text = content;
+    textController.selection = TextSelection.fromPosition(
+      TextPosition(offset: textController.text.length),
+    );
+    notifyListeners();
+  }
+
+  void updateContent(String newContent) {
+    textController.text = newContent;
     textController.selection = TextSelection.fromPosition(
       TextPosition(offset: textController.text.length),
     );

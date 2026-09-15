@@ -10,8 +10,18 @@ import 'result_screen.dart';
 import 'scanner_custom_overlay.dart';
 
 class ScannerScreen extends StatefulWidget {
-  final Function(String) onBarcodeScanned;
-  const ScannerScreen({super.key, required this.onBarcodeScanned});
+  final String? currentScannedValues;
+  final String Function()? getScannedValues;
+  final ValueChanged<String>? onContentChanged;
+  final void Function(String barcode, {bool withSeparator}) onBarcodeScanned;
+
+  const ScannerScreen({
+    super.key,
+    this.currentScannedValues,
+    this.getScannedValues,
+    this.onContentChanged,
+    required this.onBarcodeScanned,
+  });
 
   @override
   State<ScannerScreen> createState() => _ScannerScreenState();
@@ -170,13 +180,22 @@ class _ScannerScreenState extends State<ScannerScreen> {
   }
 
   void _showResult(String barcodeValue) async {
+    final currentValues = widget.getScannedValues?.call() ??
+        widget.currentScannedValues ??
+        '';
+
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => ResultScreen(
           barcodeValue: barcodeValue,
+          currentScannedValues: currentValues,
+          onContentChanged: widget.onContentChanged,
           onSave: (val) {
-            widget.onBarcodeScanned(val);
+            widget.onBarcodeScanned(val, withSeparator: false);
+          },
+          onSaveWithSeparator: (val) {
+            widget.onBarcodeScanned(val, withSeparator: true);
           },
         ),
       ),
